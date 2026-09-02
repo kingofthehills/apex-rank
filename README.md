@@ -1,73 +1,101 @@
-# Welcome to your Lovable project
+# Apex Rank
 
-## Project info
+A real-time gaming leaderboard dashboard built with React and Supabase. It displays the top-ranked players, lets you look up an individual player's rank, submit new scores, and seed the database with large amounts of test data — all with live updates pushed to every connected client via Supabase Realtime.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- **Top 10 leaderboard** — auto-refreshes every 10 seconds and also updates instantly through a Supabase Realtime subscription on the `leaderboard` table
+- **Player rank lookup** — search for any player by user ID via the `get_player_rank` database function
+- **Score submission** — submit a score for a user through the `submit_score` RPC, which atomically records the game session, updates their total score, and recalculates their rank
+- **Database seeding** — one-click seeding to generate up to 1,000,000 users and 5,000,000 game sessions in batches, then refresh the leaderboard, for testing at scale
+- **Live database status panel** — shows current row counts for users, game sessions, and the leaderboard
+- Built with [shadcn/ui](https://ui.shadcn.com/) components (cards, tables, badges, toasts, etc.) on top of Tailwind CSS
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- [React 18](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Vite 5](https://vitejs.dev/)
+- [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/) primitives + [Tailwind CSS](https://tailwindcss.com/)
+- [Supabase](https://supabase.com/) — Postgres database, Row Level Security, RPC functions, `pg_cron` for scheduled leaderboard refreshes, and Realtime subscriptions
+- [TanStack React Query](https://tanstack.com/query/latest) + [React Router](https://reactrouter.com/)
+- [Vitest](https://vitest.dev/) + Testing Library for tests
+- This project was originally scaffolded with [Lovable](https://lovable.dev/)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Project Structure
 
-Changes made via Lovable will be committed automatically to this repo.
+```
+apex-rank/
+├── src/
+│   ├── pages/
+│   │   ├── Index.tsx          # Main leaderboard dashboard
+│   │   └── NotFound.tsx
+│   ├── components/ui/         # shadcn/ui component library
+│   ├── integrations/supabase/ # Supabase client + generated types
+│   ├── hooks/
+│   ├── lib/
+│   └── App.tsx                # Routing and app providers
+├── supabase/
+│   ├── config.toml
+│   └── migrations/            # SQL: tables, RPC functions, RLS policies
+└── vite.config.ts
+```
 
-**Use your preferred IDE**
+### Database Schema
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+The Supabase migrations set up three tables (`users`, `game_sessions`, `leaderboard`) plus three Postgres functions:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- `refresh_leaderboard(top_n)` — recomputes ranks for the top N players from aggregated session scores
+- `submit_score(user_id, score, game_mode)` — atomically inserts a game session and updates that player's leaderboard entry
+- `get_player_rank(user_id)` — looks up a single player's current rank
 
-Follow these steps:
+Row Level Security is enabled on all tables with public read access, and the `leaderboard` table is added to the Realtime publication.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Getting Started
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Prerequisites
 
-# Step 3: Install the necessary dependencies.
-npm i
+- Node.js 18+ (or [Bun](https://bun.sh/), since a `bun.lockb` is included)
+- A [Supabase](https://supabase.com/) project with the SQL migrations in `supabase/migrations/` applied
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Installation
+
+```bash
+git clone https://github.com/kingofthehills/apex-rank.git
+cd apex-rank
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file in the project root with your Supabase project credentials:
+
+```
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+VITE_SUPABASE_PROJECT_ID=your_supabase_project_id
+```
+
+### Run the dev server
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Build for production
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run build
+npm run preview
+```
 
-**Use GitHub Codespaces**
+### Tests
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+npm run test        # single run
+npm run test:watch  # watch mode
+```
 
-## What technologies are used for this project?
+### Lint
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```bash
+npm run lint
+```
